@@ -2,16 +2,42 @@
 #include <LiquidCrystal_I2C.h>
 #define PIN_BTN_A 6
 #define PIN_RELAY 8
-#define WATER_TIMER 120
-#define IDLE_TIMER 1800
+#define WATER_MAX_SEC 60
+#define IDLE_MAX_SEC 1800
 
 /* Define for LCD */
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
+enum ACRION {WATERING, NO_SENSOR, IDLE};
+int watering_timer = WATER_MAX_SEC;
+int idle_timer = IDLE_MAX_SEC;
+
+void do_action(int action)
+{
+	switch(action)	{
+	case WATERING:
+		lcd.setCursor(7,1);
+		lcd.print("watering");
+		digitalWrite(PIN_RELAY, HIGH);
+		break;
+	case NO_SENSOR:
+		lcd.setCursor(6,1);
+		lcd.print("no sensor");
+		break;
+	case IDLE:
+		lcd.setCursor(0,1);
+		lcd.print(idle_timer);
+		lcd.setCursor(9,1);
+		lcd.print("idle");
+		break;
+	default:
+		lcd.setCursor(0,1);
+		lcd.print("ERROR");
+	}
+}
+
 void setup()
 {
-	Serial.begin(9600);
-	Serial.println("Arduino start!");
 	pinMode(PIN_BTN_A, INPUT);
 	pinMode(PIN_RELAY, OUTPUT);
 	lcd.begin(16, 2);
@@ -26,8 +52,6 @@ void setup()
 void loop()
 {
 	static int btn_a,i,sensor_value,level;
-	static int watering_timer = WATER_TIMER;
-	static int idle_timer = IDLE_TIMER;
 	unsigned long v = 0x0;
 
 	btn_a = digitalRead(PIN_BTN_A);
@@ -38,15 +62,12 @@ void loop()
 	sensor_value = analogRead(A0);
 	level = 11 - (sensor_value - 200) / 70;
 
+	/* If button be pushed or level is between 1~5 --> watering
+	   But when level = 0, we determine no sensor */
 	if (level > 10)
 		level = 10;
 	else if (level < 0)
 		level = 0;
-
-	Serial.print("sensor = ");
-	Serial.print(sensor_value);
-	Serial.print(", level = ");
-	Serial.println(level);
 		
 	lcd.clear();
 	lcd.setCursor(0,0);
@@ -55,35 +76,28 @@ void loop()
 	for (i = 0; i < level; i++)
 		lcd.print("#");
 
-	/* If button be pushed or level is between 1~5 --> watering 
-	   But when level = 0, we determine no sensor */
-	if (btn_a || (level > 0 && level <= 5 && watering_timer)) { // status: watering
-		lcd.setCursor(7,1);
-		lcd.print("watering");
-		digitalWrite(PIN_RELAY, HIGH);
-		if (btn_a == 0) {
-			lcd.setCursor(0,1);
-			lcd.print(watering_timer);
-			watering_timer--;
-		}
-		
+	if (btn_a) {
+		/* Push button: watering and reset idle_timer */
+		do_action(WATERING);
+		idle_timer = 0;
+	} else if (level > 0 && level < 5 && watering_timer) {
+		/* Auto watering */
+		do_action(WATERING);
+		lcd.setCursor(0,1);
+		lcd.print(watering_timer);
+		watering_timer--;
 	} else {
-		if (level == 0) { // status:no sensor
-			lcd.setCursor(6,1);
-			lcd.print("no sensor");
-		} else {// status: idle
-			lcd.setCursor(0,1);
-			lcd.print(idle_timer);
-			lcd.setCursor(9,1);
-			lcd.print("idle");
-		}
+		if (level == 0) /* No sensor */
+			do_action(NO_SENSOR);
+		else /* Idle */
+			do_action(IDLE);
 		digitalWrite(PIN_RELAY, LOW);
 		idle_timer--;
 	}
 
 	if (idle_timer == 0) {
-		idle_timer = IDLE_TIMER;
-		watering_timer = WATER_TIMER;
+		idle_timer = IDLE_MAX_SEC;
+		watering_timer = WATER_MAX_SEC;
 	}
 
 next:
