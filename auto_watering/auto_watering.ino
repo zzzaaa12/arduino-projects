@@ -11,6 +11,8 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 enum ACRION {WATERING, NO_SENSOR, IDLE};
 int watering_timer = WATER_MAX_SEC;
 int idle_timer = IDLE_MAX_SEC;
+int water_count = 0;
+int status;
 
 void do_action(int action)
 {
@@ -19,16 +21,23 @@ void do_action(int action)
 		lcd.setCursor(7,1);
 		lcd.print("watering");
 		digitalWrite(PIN_RELAY, HIGH);
+		if (status != WATERING)
+			water_count++;
+		status = WATERING;
 		break;
 	case NO_SENSOR:
 		lcd.setCursor(6,1);
 		lcd.print("no sensor");
+		status = NO_SENSOR;
 		break;
 	case IDLE:
 		lcd.setCursor(0,1);
 		lcd.print(idle_timer);
+		lcd.setCursor(6,1);
+		lcd.print(water_count);
 		lcd.setCursor(9,1);
 		lcd.print("idle");
+		status = IDLE;
 		break;
 	default:
 		lcd.setCursor(0,1);
