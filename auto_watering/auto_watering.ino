@@ -2,6 +2,7 @@
 #include <LiquidCrystal_I2C.h>
 #define PIN_BTN_A 6
 #define PIN_RELAY 8
+#define WATER_MIN_SEC 10
 #define WATER_MAX_SEC 60
 #define IDLE_MAX_SEC 1800
 
@@ -49,6 +50,7 @@ void setup()
 {
 	pinMode(PIN_BTN_A, INPUT);
 	pinMode(PIN_RELAY, OUTPUT);
+	Serial.begin(115200);
 	lcd.begin(16, 2);
 	for (int i = 0; i < 3; i++) {
 		lcd.noBacklight();
@@ -60,7 +62,7 @@ void setup()
 
 void loop()
 {
-	static int btn_a,i,sensor_value,level;
+	static int btn_a, i, sensor_value, level, ratio;
 	unsigned long v = 0x0;
 
 	btn_a = digitalRead(PIN_BTN_A);
@@ -69,22 +71,23 @@ void loop()
 
 	/* Get sensor value and determine level */
 	sensor_value = analogRead(A0);
-	level = 11 - (sensor_value - 200) / 70;
+	ratio = 110 - (sensor_value - 150) / 8;
 
-	/* If button be pushed or level is between 1~5 --> watering
-	   But when level = 0, we determine no sensor */
-	if (level > 10)
-		level = 10;
-	else if (level < 0)
-		level = 0;
-		
+	if (ratio > 100)
+		ratio = 100;
+	else if (ratio < 0)
+		ratio = 0;
+
 	lcd.clear();
 	lcd.setCursor(0,0);
 	lcd.print("Level:");
+	level = ratio / 10;
 	
 	for (i = 0; i < level; i++)
 		lcd.print("#");
 
+	/* If button be pushed or level is between 1~5 --> watering
+	   But when level = 0, we determine no sensor */
 	if (btn_a) {
 		/* Push button: watering and reset idle_timer */
 		do_action(WATERING);
@@ -94,7 +97,8 @@ void loop()
 		do_action(WATERING);
 		lcd.setCursor(0,1);
 		lcd.print(watering_timer);
-		watering_timer--;
+		delay(WATER_MIN_SEC * 1000);
+		watering_timer -= WATER_MIN_SEC;
 	} else {
 		if (level == 0) /* No sensor */
 			do_action(NO_SENSOR);
@@ -108,7 +112,6 @@ void loop()
 		idle_timer = IDLE_MAX_SEC;
 		watering_timer = WATER_MAX_SEC;
 	}
-
 next:
-	 delay(1000);
+	delay(1000);
 }
