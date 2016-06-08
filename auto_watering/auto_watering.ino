@@ -5,6 +5,7 @@
 #define WATER_MIN_SEC 10
 #define WATER_MAX_SEC 60
 #define IDLE_MAX_SEC 1800
+#define UPLOAD_MAX_SEC 1200
 
 /* Define for LCD */
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
@@ -12,6 +13,7 @@ LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 enum ACRION {WATERING, NO_SENSOR, IDLE};
 int watering_timer = WATER_MAX_SEC;
 int idle_timer = IDLE_MAX_SEC;
+int upload_timer = 10;
 int water_count = 0;
 int status;
 
@@ -112,6 +114,14 @@ void loop()
 		idle_timer = IDLE_MAX_SEC;
 		watering_timer = WATER_MAX_SEC;
 	}
+
+	if (upload_timer == 0) {
+		Serial.println("WTPOST+HOST:api.thingspeak.com,PORT:80,URI:update.json,DATA:api_key=HOVD8QWP3JG1E0R6&field5=" + String(ratio) + "&field6=" + String(water_count));
+		upload_timer = UPLOAD_MAX_SEC;
+	}
+
+	upload_timer-- ;
+
 next:
 	delay(1000);
 }
