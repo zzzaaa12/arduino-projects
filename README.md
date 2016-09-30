@@ -21,4 +21,9 @@ My Arduino Projects
 ## 萬用遙控器  
 1. 整合電扇、喇叭、檯燈的紅外線訊號  
 2. 將上述電器的紅外線訊號對應到網樂通遙控器上  
-圖片連結：https://www.facebook.com/1781305756/posts/10203037330292461
+圖片連結：https://www.facebook.com/1781305756/posts/10203037330292461  
+
+## 手動開關  
+1. 利用 Putty/Minicom 連接到 Arduino 的 Serial Port  
+2. 可以對繼電器作 up, down, reset 等功能  
+圖片連結：https://www.facebook.com/zzzaaa12/posts/10205198980092355  
