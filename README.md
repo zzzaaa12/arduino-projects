@@ -18,6 +18,12 @@ My Arduino Projects
 2. 定時將溫溼度資訊上傳到thinkspeak上  
 圖片連結：https://www.facebook.com/1781305756/posts/10203656411129095  
 
+## ESP8266+DHT22整合網頁
+1. 用 Arduino IDE 編寫程式放到ESP8266上  
+2. 定時讀取溫溼度資訊上傳到thinkspeak上  
+3. 將 thinkspeak 的資訊整合在一個手機版網頁上   
+圖片連結：https://www.facebook.com/zzzaaa12/posts/10210356230300387
+
 ## 萬用遙控器  
 1. 整合電扇、喇叭、檯燈的紅外線訊號  
 2. 將上述電器的紅外線訊號對應到網樂通遙控器上  
